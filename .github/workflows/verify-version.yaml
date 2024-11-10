@@ -1,0 +1,74 @@
+name: Verify Helm Chart Versions
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-chart-versions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3.5
+        with:
+          version: v3.15.2
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Get list of changed files
+        id: changed-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const changedFiles = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+              }
+            );
+            return changedFiles.map(file => file.filename).join(' ');
+
+      - name: Fetch target branch
+        run: |
+          git fetch origin main:main
+
+      - name: Verify chart versions
+        id: verify-versions
+        run: |
+          find_chart_yaml() {
+            dir=$1
+            while [[ "$dir" != "/" && "$dir" != "." ]]; do
+              if [[ -f "$dir/Chart.yaml" ]]; then
+                echo "$dir/Chart.yaml"
+                return
+              fi
+              dir=$(dirname "$dir")
+            done
+          }
+
+          for file in ${{ steps.changed-files.outputs.result }}; do
+            chart_yaml=$(find_chart_yaml $(dirname $file))
+            if [[ -n "$chart_yaml" ]]; then
+              chart_dir=$(dirname $chart_yaml)
+              old_version=$(git show main:$chart_yaml | yq e '.version' -)
+              new_version=$(yq e '.version' $chart_yaml)
+              if [ "$old_version" == "$new_version" ]; then
+                echo "Error: Version not updated for chart $chart_dir"
+                exit 1
+              else
+                echo "Version updated for chart $chart_dir"
+              fi
+            fi
+          done

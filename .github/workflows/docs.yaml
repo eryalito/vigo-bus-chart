@@ -1,0 +1,61 @@
+name: Create documentation for Helm charts
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  docs-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install helm-docs
+        working-directory: /tmp
+        run: |-
+          curl -L https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz -o helm-docs.tar.gz
+          tar -xvzf helm-docs.tar.gz
+          mv helm-docs /usr/local/bin/helm-docs
+
+      - name: Find and create docs for Helm charts
+        run: |
+          set -e
+          helm-docs
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          changes=$(git status --porcelain | grep README.md | wc -l)
+          echo "changes=$changes" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes if README.md files are modified
+        if: steps.check_changes.outputs.changes != '0'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add **/README.md
+          git commit -m "Update Helm chart documentation"
+
+      - name: Git cleanup
+        run: |
+          git reset --hard
+          git clean -df
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        if: steps.check_changes.outputs.changes != '0'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Helm chart documentation"
+          branch: update-helm-docs
+          title: "Update Helm chart documentation"
+          body: "This PR updates the Helm chart documentation."
+          labels: documentation
