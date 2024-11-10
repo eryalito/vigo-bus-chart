@@ -38,7 +38,10 @@ spec:
             - name: API_URL
               value: "{{ .Values.apiUrl }}"
             - name: API_TOKEN
-              value: "{{ .Values.apiToken }}"
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ include "vigo-bus-tg-bot.fullname" . }}-token'
+                  key: api-token
             - name: BOT_TOKEN
               valueFrom:
                 secretKeyRef:
