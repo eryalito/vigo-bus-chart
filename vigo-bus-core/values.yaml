@@ -7,7 +7,7 @@ storageClassName: ""
 volumeMode: ""
 
 # This is for setting the token for the application
-token: "your-secret-token"
+apiToken: "your-secret-token"
 googleMapsAPIKey: ""
 rateLimiterLimit: "1"
 rateLimiterBurst: "5"
