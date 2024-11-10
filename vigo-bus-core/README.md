@@ -1,6 +1,6 @@
 # vigo-bus-core
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.5](https://img.shields.io/badge/AppVersion-0.1.5-informational?style=flat-square)
+![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.5](https://img.shields.io/badge/AppVersion-0.1.5-informational?style=flat-square)
 
 A Helm chart for deploying the vigo bus core application on Kubernetes
 
@@ -9,6 +9,7 @@ A Helm chart for deploying the vigo bus core application on Kubernetes
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
+| apiToken | string | `"your-secret-token"` |  |
 | fullnameOverride | string | `""` |  |
 | googleMapsAPIKey | string | `""` |  |
 | identityDBPath | string | `"/app/data/identity.db"` |  |
@@ -41,7 +42,6 @@ A Helm chart for deploying the vigo bus core application on Kubernetes
 | serviceAccount.name | string | `""` |  |
 | stopsDBPath | string | `"/app/data/stops.db"` |  |
 | storageClassName | string | `""` |  |
-| token | string | `"your-secret-token"` |  |
 | tolerations | list | `[]` |  |
 | volumeMode | string | `""` |  |
 | volumeMounts | list | `[]` |  |
