@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vigo-bus-tg-bot
+description: A Helm chart for deploying the vigo bus telegram bot on Kubernetes
+
+type: application
+
+version: 0.1.0
+
+appVersion: "0.1.2"

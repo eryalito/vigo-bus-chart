@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vigo-bus-core.fullname" . }}
+  labels:
+    {{- include "vigo-bus-core.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "vigo-bus-core.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "vigo-bus-core.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "vigo-bus-core.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: database-init
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          env:
+            - name: STOPS_DATABASE_PATH
+              value: "{{ .Values.stopsDBPath }}"
+          volumeMounts:
+            - name: db-storage
+              mountPath: {{ .Values.pvcPath }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: GIN_MODE
+              value: "debug"
+            - name: PORT
+              value: "{{ .Values.service.port }}"
+            - name: TOKEN
+              value: "{{ .Values.token }}"
+            - name: GOOGLE_MAPS_API_KEY
+              value: "{{ .Values.googleMapsAPIKey }}"
+            - name: RATE_LIMITER_LIMIT
+              value: "{{ .Values.rateLimiterLimit }}"
+            - name: RATE_LIMITER_BURST
+              value: "{{ .Values.rateLimiterBurst }}"
+            - name: STOPS_DB_PATH
+              value: "{{ .Values.stopsDBPath }}"
+            - name: IDENTITY_DB_PATH
+              value: "{{ .Values.identityDBPath }}"
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: db-storage
+              mountPath: {{ .Values.pvcPath }}
+          {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: "{{ .Release.Name }}-pvc"
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

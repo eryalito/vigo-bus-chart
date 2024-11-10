@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vigo-bus-core
+description: A Helm chart for deploying the vigo bus core application on Kubernetes
+
+type: application
+
+version: 0.1.0
+
+appVersion: "0.1.5"
