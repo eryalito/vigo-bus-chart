@@ -48,5 +48,5 @@ jobs:
           set -e
           charts=$(find . -name '*.tgz')
           for chart in $charts; do
-            helm push $chart ghcr.io/${{ github.repository }}
+            helm push $chart oci://ghcr.io/${{ github.repository }}
           done
