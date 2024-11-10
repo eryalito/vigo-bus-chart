@@ -1,0 +1,35 @@
+name: Package and Upload Helm Chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      chart-folder:
+        description: 'Select the Helm chart folder'
+        required: true
+        default: 'vigo-bus-core'
+        type: choice
+        options:
+          - vigo-bus-core
+          - vigo-bus-tg-bot
+
+jobs:
+  package-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v1
+
+    - name: Package Helm chart
+      run: |
+        helm package ${{ github.event.inputs.chart-folder }}
+        ls -l
+
+    - name: Upload Helm chart as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: helm-chart
+        path: ${{ github.event.inputs.chart-folder }}/*.tgz

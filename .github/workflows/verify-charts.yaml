@@ -1,0 +1,33 @@
+name: Verify Helm Chart Buildability
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-chart-building:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3.5
+        with:
+          version: v3.15.2
+
+      - name: Find and build Helm charts
+        run: |
+          set -e
+          charts=$(find . -name 'Chart.yaml')
+          for chart in $charts; do
+            chart_dir=$(dirname $chart)
+            echo "Downloading dependencies for $chart_dir"
+            helm dependency update $chart_dir
+            echo "Building chart in $chart_dir"
+            helm package $chart_dir
+          done
